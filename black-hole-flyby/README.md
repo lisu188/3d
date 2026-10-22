@@ -24,17 +24,21 @@ godot --path .
 
 ## Screenshots
 
-`./screenshots/` includes four **reference-frame previews** produced separately from the Godot renderer for design review. They should not be misrepresented as screenshots captured from the Godot runtime.
+The following four screenshots were **captured from the actual Godot 4.4.1 runtime** by the GitHub Actions CI job using a virtual display:
 
-The CI workflow is configured to validate the project and to take **real Godot screenshots** on a virtual display, saving them as `01_distant.png`, `02_lensing.png`, `03_tides.png`, and `04_disruption.png` when successful. It commits them to the feature branch if it has write permission.
+| Distant | Gravitational lensing |
+| --- | --- |
+| ![Distant black hole](screenshots/01_distant.png) | ![Lensing phase](screenshots/02_lensing.png) |
+| Tidal forces | Hypothetical post-disruption view |
+| ![Tidal phase](screenshots/03_tides.png) | ![Disruption phase](screenshots/04_disruption.png) |
 
-To capture genuine local screenshots from Godot 4.4+:
+To capture the four stages locally with Godot 4.4+:
 
 ```bash
 godot --path . -- --capture-dir=./screenshots
 ```
 
-The command records four scenes and quits. It needs a working display and GPU-backed renderer; `--headless` does not render video frames.
+The command saves four images and quits. It needs a working graphical display and renderer; `--headless` does not render video frames.
 
 ## Physical model
 

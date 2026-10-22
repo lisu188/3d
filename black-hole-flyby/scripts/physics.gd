@@ -34,6 +34,18 @@ static func radial_time_antiderivative(distance_m: float) -> float:
 static func travel_time(from_m: float, to_m: float) -> float:
 	return radial_time_antiderivative(from_m) - radial_time_antiderivative(to_m)
 
+static func format_ratio(value: float) -> String:
+	if value <= 0.0:
+		return "0"
+	if value < 0.0001:
+		var exponent: int = int(floor(log(value) / log(10.0)))
+		return "%.2f×10^%d" % [value / pow(10.0, float(exponent)), exponent]
+	if value < 1.0:
+		return "%.4f" % value
+	if value < 1000.0:
+		return "%.2f" % value
+	return "%.0f" % value
+
 static func format_distance(distance_m: float) -> String:
 	var km: float = distance_m / 1000.0
 	if km >= 1000000.0:

@@ -11,5 +11,8 @@ func _initialize() -> void:
 	assert(Physics.travel_time(1.5e11, Physics.critical_distance()) > 500000.0)
 	assert(Physics.travel_time(5.0e9, Physics.critical_distance()) > 3900.0)
 	assert(Physics.travel_time(2.0e9, Physics.critical_distance()) < 620.0)
+	assert(Physics.format_ratio(0.21555).begins_with("0.21"))
+	assert(Physics.format_ratio(5.1e-7).contains("10^"))
+	assert(Physics.format_ratio(4.1347).begins_with("4.13"))
 	print("PHYSICS TESTS PASSED")
 	quit(0)

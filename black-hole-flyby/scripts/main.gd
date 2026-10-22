@@ -256,7 +256,7 @@ func _draw_overlay(size: Vector2, radius: float, tidal: float) -> void:
 	_draw_text(Physics.format_distance(radius), Vector2(64.0, 247.0), 29)
 	_draw_text("RÓŻNICA PRZYSPIESZEŃ PŁYWOWYCH", Vector2(64.0, 278.0), 12, Color(0.55, 0.70, 0.82))
 	var tidal_color: Color = Color(1.0, 0.54, 0.38) if tidal >= 0.1 else Color(0.91, 0.94, 1.0)
-	_draw_text("%.5g × g" % tidal, Vector2(64.0, 311.0), 26, tidal_color)
+	_draw_text(Physics.format_ratio(tidal) + " × g", Vector2(64.0, 311.0), 26, tidal_color)
 	_draw_text("DO PROGU Δg ≈ 1 g", Vector2(64.0, 344.0), 12, Color(0.55, 0.70, 0.82))
 	var critical: float = Physics.critical_distance()
 	var remaining: float = Physics.travel_time(radius, critical)
