@@ -91,7 +91,7 @@ func separation_km(row: PackedFloat64Array, first: int, second: int) -> float:
 func lunar_specific_energy(row: PackedFloat64Array) -> float:
 	var sq: float = 0.0
 	for k in range(3):
-		var v: float = row[17 + k] - row[11 + k]
+		var v: float = row[16 + k] - row[10 + k]
 		sq += v * v
 	var speed_scale: float = AU_M / DAY_S
 	return 0.5 * sq * speed_scale * speed_scale - (GMS[1] + GMS[2]) / (separation_au(row, 1, 2) * AU_M)
