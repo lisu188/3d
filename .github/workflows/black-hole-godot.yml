@@ -22,10 +22,17 @@ jobs:
           curl --fail --location --retry 3 --output godot.zip https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
           unzip -q godot.zip
           chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Install scientific orbit integrator
+        run: python3 -m pip install --quiet numpy scipy
+      - name: Integrate NASA/JPL orbital initial states
+        run: |
+          python3 black-hole-flyby/scripts/generate_orbits.py --initial horizons --epoch '2026-10-23 00:00' --output black-hole-flyby/data/four_body.csv --reference-validation
       - name: Import and compile
         run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-flyby --editor --quit
       - name: Physical model tests
         run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-flyby --script res://tests/physics_test.gd
+      - name: Test orbital data and numerical drift
+        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-flyby --script res://tests/orbit_data_test.gd
       - name: Capture actual Godot screenshots
         run: |
           sudo apt-get update -qq
@@ -50,11 +57,19 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add black-hole-flyby/screenshots/0[1-4]_*.png
+          git add black-hole-flyby/screenshots/0[1-4]_*.png black-hole-flyby/data/four_body.csv black-hole-flyby/data/four_body.json
           if ! git diff --cached --quiet; then
             git commit -m "docs: add actual Godot runtime screenshots"
             git push
           fi
+      - name: Upload scientific trajectory and diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: four-body-solution-and-diagnostics
+          path: |
+            black-hole-flyby/data/four_body.csv
+            black-hole-flyby/data/four_body.json
+          if-no-files-found: error
       - name: Upload screenshot artifact
         uses: actions/upload-artifact@v4
         with:

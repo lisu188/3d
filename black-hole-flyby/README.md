@@ -1,80 +1,51 @@
-# Black Hole Flyby — Earth (Godot 4)
+# Black Hole Flyby — self-consistent N-body orbits (Godot 4.4)
 
-An interactive 80-second, 2D visualization of a **10-solar-mass black hole passing directly toward Earth**. The camera is just above Earth's curved horizon, looking into deep space. The Moon and Sun are both visible. The planet, Moon, Sun, starfield and lensing effects are procedural; there are no borrowed images or video assets.
+This project simulates the gravitational response of the **Sun, Earth, Moon, and an incoming 10-solar-mass black hole**. It replaces the old hand-keyframed distances with actual integrations of Newton's mutual four-body equations.
 
-Inspired by [LunarzoneAnimates' YouTube Short](https://www.youtube.com/shorts/9KLW4rp-ou8). The animation is original and is **not** a frame-by-frame reproduction.
+## Physical model and reproducibility
+
+* **Four mutually gravitating point masses.** Their adopted gravitational parameters are JPL DE440/DE441 values for the Sun, Earth, and Moon, and ten times the Sun's parameter for the black hole.
+* **Epoch:** 2026-10-23 00:00 **TDB**, when JPL Horizons geometric vectors are available. The optional fallback uses explicitly *idealized* circular orbital initial conditions, **not historical ephemerides**. The generated `data/four_body.json` identifies the actual source used.
+* **Reference frame:** solar-system-barycentric, ICRF Cartesian coordinates (where available); the black hole is added as a hypothetical fourth gravitating body.
+* **Encounter:** black hole initially 0.8 au radially outward from Earth, plus a 0.38 au transverse offset and 0.006 au normal offset, travelling radially inward at 200 km/s relative to the initial Sun. This is a **specified hypothetical initial state**, not an observation or guaranteed impact trajectory.
+* **Integration:** SciPy's adaptive eighth-order DOP853, relative tolerance `3×10⁻¹¹`, 20 mm absolute position tolerance, 20 nm/s velocity tolerance, max internal step 2 h. Output 1201 physical state vectors covering 15 days and cubic Hermite interpolation in Godot using 64-bit scalar positions and velocities.
+* **Physical-time playback:** 15 days compressed to 80 seconds of screen time; the camera's apparent sizes and optical distortions are deliberately stylized. Trajectory panels, distances, and two-body energy diagnostics are computed from the trajectory, not hand-animated.
+* **Conservation checks:** `data/four_body.json` contains recorded total energy, linear/angular momentum drift and a repeat integration with tenfold tighter error tolerances. For the deterministic idealized initialization, total relative energy drift was ≈1.4×10⁻¹⁵ and position differences from the tighter integration stayed below 0.4 m. These figures apply **to the numerical four-body model**, not to astronomical prediction error.
+
+## What the visualization shows
+
+The main view has the curved Earth limb and background Sun/Moon as context. Their illustrative sizes and positions **are not sky ephemerides**. The right-hand diagrams are the physical simulation: an inertial view of the Sun/Earth/black-hole and a geocentric view of the lunar trajectory. Colored trails are from numerical integrations, with future paths shown faintly. The blue reference circle in the lunar plot marks Earth's usual lunar orbital radius.
+
+The instantaneous Earth-relative Moon specific orbital energy is diagnostic only: positive instantaneous energy does not guarantee permanent escape in an active four-body gravitational encounter. For an accurate long-term escape verdict, integration would have to be extended until the encounter's tidal interactions become negligible.
+
+The baseline without the black hole is integrated separately from the same initial Sun/Earth/Moon state. Absolute displacements between perturbed and unperturbed simulations are stored in the report, including the Sun's displacement.
+
+## Limits of accuracy
+
+This is a high-accuracy numerical solution of the **specified Newtonian point-mass problem**, **not** an exact prediction of real-world trajectories. It omits the other planets, extended-body tides, lunar/Earth collisions and material deformation, solar mass multipoles, relativistic corrections, gravitational waves, and the uncertainty in a hypothetical black hole's initial state. If Earth and Moon or other modeled bodies collide, the generator aborts rather than silently continuing through an invalid point-mass passage.
 
 ## Run
 
-Open `project.godot` in **Godot 4.4+** and press `F6` / Run Current Scene, or launch the project with `F5` / Run Project.
+Requirements: Python 3.10+, `numpy`, `scipy`, and Godot 4.4+.
 
 ```bash
+python -m pip install numpy scipy
+cd black-hole-flyby
+python scripts/generate_orbits.py --initial horizons --epoch '2026-10-23 00:00' --output data/four_body.csv --reference-validation
 godot --path .
 ```
 
-| Control | Action |
-| --- | --- |
-| Space | Pause / resume |
-| Left / right | Step backward / forward three seconds |
-| 1–5 | Jump to five significant stages |
-| R | Restart |
-| Home / End | Jump to start / end |
-| F | Toggle fullscreen |
-| Click or drag the bottom timeline | Scrub |
+Without internet access, use `--initial idealized` and treat the outcome as an explicitly idealized experiment.
 
-## Screenshots
+Controls: Space pause/resume, Left/Right ±3 seconds, `1`–`5` animation stages, R restart, click/drag the timeline. `-- --capture-dir=/absolute/path` exports four real Godot screenshots.
 
-The following four screenshots were **captured from the actual Godot 4.4.1 runtime** by the GitHub Actions CI job using a virtual display:
+The GitHub Actions workflow validates the generated data, tests the existing physics formulas, renders four frames, exports the full 80-second film at 1280×720, 15 fps and converts the result to H.264 MP4.
 
-| Distant | Gravitational lensing |
-| --- | --- |
-| ![Distant black hole](screenshots/01_distant.png) | ![Lensing phase](screenshots/02_lensing.png) |
-| Tidal forces | Hypothetical post-disruption view |
-| ![Tidal phase](screenshots/03_tides.png) | ![Disruption phase](screenshots/04_disruption.png) |
+## Primary references
 
-To capture the four stages locally with Godot 4.4+:
+* [NASA/JPL astrodynamic gravitational parameters](https://ssd.jpl.nasa.gov/astro_par.html)
+* [NASA/JPL Horizons API](https://ssd-api.jpl.nasa.gov/doc/horizons.html)
+* [JPL Horizons user manual](https://ssd.jpl.nasa.gov/horizons/manual.html)
+* [DOP853 method implemented in SciPy solve_ivp](https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html)
 
-```bash
-godot --path . -- --capture-dir=./screenshots
-```
-
-The command saves four images and quits. It needs a working graphical display and renderer; `--headless` does not render video frames.
-
-## Physical model
-
-- Black-hole mass: `10 M☉`.
-- Asymptotic approach speed: `200 km/s`.
-- Schwarzschild radius: `29.53 km`.
-- Tidal difference between Earth center and near-side surface (first-order approximation): `Δa ≈ 2GM R⊕ / d³`.
-- The condition `Δa = 1 g` occurs at approximately **1.199 million km** from Earth's center.
-- Angular Einstein radius for effectively distant background stars: `θE ≈ √(4GM / (c²d))`.
-- Shadow's small-angle radius: `θshadow ≈ 3√3 GM / (c²d)` for a nonrotating black hole.
-- Radial speed: `v(r) = √(v∞² + 2GM/r)`; the displayed countdown uses the analytical integral of `dr/v(r)` to the `Δa = 1 g` threshold.
-
-This is a **pedagogical toy model, not numerical relativity**. It assumes a nonrotating isolated black hole, radial approach, a static observer for the sky projection, distant background stars and Newtonian two-body radial motion. Earth would accelerate toward the hole, deform, develop extreme tidal effects and lose its ability to host an observer well before the final cinematic frames. The instant at which `Δa = 1 g` is **not an exact destruction time**, and disruption depends on Earth's dynamical response and internal structure.
-
-## Visualization vs. physical scale
-
-To make a black hole visible in a 720-pixel-high frame, two quantities are deliberately magnified: the computed Einstein angular radius by **8×**, and the computed shadow radius by **550×**. The shadow also has a minimum and maximum rendered size. The thin blue lensing arc is an **illustrative graphic**, not a luminous accretion disk or a guaranteed Einstein ring. The original physical quantities in the information panel are not magnified. The timeline is intentionally nonlinear, so **80 seconds of animation do not represent 80 seconds of physical time**.
-
-The dark circular shape is not a scientifically faithful rendering of the true apparent shadow; the actual shadow would appear extremely small long before Earth was disrupted. The orbit-height camera, planet textures, Sun and Moon sizes, and Moon/Sun positions are artistic devices, not scale-accurate ephemerides. No claims are made about global earthquake timing, ocean response, precise Roche limit, or human survivability.
-
-## Tests
-
-```bash
-godot --headless --path . --editor --quit
-godot --headless --path . --script res://tests/physics_test.gd
-```
-
-## Sources
-
-- [NASA — Black Holes](https://science.nasa.gov/universe/black-holes/) (visibility, gravitational lensing, long-range gravity).
-- [NASA — Anatomy of a Black Hole](https://science.nasa.gov/universe/black-holes/anatomy/) (event horizon, black hole shadow, lensing).
-- [Godot — CanvasItem shaders](https://docs.godotengine.org/en/stable/tutorials/shaders/shader_reference/canvas_item_shader.html) (rendering).
-- [Godot — Screen capture and rendering](https://docs.godotengine.org/en/stable/classes/class_renderingserver.html) (capture frame timing).
-
-## Complete movie (80 seconds)
-
-The GitHub Actions workflow exports the entire 80-second scene using the Godot Movie Maker, at 1280×720 and 15 FPS, and converts it into H.264 MP4. Download the artifact named `black-hole-flyby-orbit-mp4` from a successful `Godot validate and screenshot` workflow run. The runtime screenshots show the same orbital scene. The original source can be opened in Godot 4.4+.
-
-The film is silent and is an educational visualization; its moving sky and destruction effects are stylized rather than physically complete.
+Original inspiration: ["What if a black hole passed by Earth?"](https://www.youtube.com/shorts/9KLW4rp-ou8).
