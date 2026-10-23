@@ -1,6 +1,6 @@
 # Black Hole Flyby — Earth (Godot 4)
 
-An interactive 80-second, 2D visualization of a **10-solar-mass black hole passing directly toward Earth**. All geometry, skyline, starfield and lensing effects are procedural. There are no borrowed images or video assets.
+An interactive 80-second, 2D visualization of a **10-solar-mass black hole passing directly toward Earth**. The camera is just above Earth's curved horizon, looking into deep space. The Moon and Sun are both visible. The planet, Moon, Sun, starfield and lensing effects are procedural; there are no borrowed images or video assets.
 
 Inspired by [LunarzoneAnimates' YouTube Short](https://www.youtube.com/shorts/9KLW4rp-ou8). The animation is original and is **not** a frame-by-frame reproduction.
 
@@ -57,7 +57,7 @@ This is a **pedagogical toy model, not numerical relativity**. It assumes a nonr
 
 To make a black hole visible in a 720-pixel-high frame, two quantities are deliberately magnified: the computed Einstein angular radius by **8×**, and the computed shadow radius by **550×**. The shadow also has a minimum and maximum rendered size. The thin blue lensing arc is an **illustrative graphic**, not a luminous accretion disk or a guaranteed Einstein ring. The original physical quantities in the information panel are not magnified. The timeline is intentionally nonlinear, so **80 seconds of animation do not represent 80 seconds of physical time**.
 
-The dark circular shape is not a scientifically faithful rendering of the true apparent shadow; the actual shadow would appear extremely small long before Earth was disrupted. The sky and skyline are artistic devices that aid comprehension. No claims are made about global earthquake timing, ocean response, precise Roche limit, or human survivability.
+The dark circular shape is not a scientifically faithful rendering of the true apparent shadow; the actual shadow would appear extremely small long before Earth was disrupted. The orbit-height camera, planet textures, Sun and Moon sizes, and Moon/Sun positions are artistic devices, not scale-accurate ephemerides. No claims are made about global earthquake timing, ocean response, precise Roche limit, or human survivability.
 
 ## Tests
 
@@ -72,3 +72,9 @@ godot --headless --path . --script res://tests/physics_test.gd
 - [NASA — Anatomy of a Black Hole](https://science.nasa.gov/universe/black-holes/anatomy/) (event horizon, black hole shadow, lensing).
 - [Godot — CanvasItem shaders](https://docs.godotengine.org/en/stable/tutorials/shaders/shader_reference/canvas_item_shader.html) (rendering).
 - [Godot — Screen capture and rendering](https://docs.godotengine.org/en/stable/classes/class_renderingserver.html) (capture frame timing).
+
+## Complete movie (80 seconds)
+
+The GitHub Actions workflow exports the entire 80-second scene using the Godot Movie Maker, at 1280×720 and 15 FPS, and converts it into H.264 MP4. Download the artifact named `black-hole-flyby-orbit-mp4` from a successful `Godot validate and screenshot` workflow run. The runtime screenshots show the same orbital scene. The original source can be opened in Godot 4.4+.
+
+The film is silent and is an educational visualization; its moving sky and destruction effects are stylized rather than physically complete.

@@ -12,7 +12,7 @@ permissions:
 jobs:
   validate-and-capture:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,6 +31,20 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y xvfb libgl1-mesa-dri
           timeout 90s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --path black-hole-flyby -- --capture-dir="${GITHUB_WORKSPACE}/black-hole-flyby/screenshots"
+      - name: Render full orbital flyby film in Godot
+        if: github.actor != 'github-actions[bot]'
+        run: |
+          mkdir -p black-hole-flyby/video
+          timeout 1800s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --disable-vsync --path black-hole-flyby --write-movie video/orbital-flyby.avi --fixed-fps 15 --quit-after 1200
+          ffmpeg -hide_banner -loglevel error -y -i black-hole-flyby/video/orbital-flyby.avi -c:v libx264 -preset veryfast -crf 24 -pix_fmt yuv420p -movflags +faststart black-hole-flyby/video/black-hole-flyby.mp4
+          ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 black-hole-flyby/video/black-hole-flyby.mp4
+      - name: Upload complete MP4 movie
+        if: github.actor != 'github-actions[bot]'
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-hole-flyby-orbit-mp4
+          path: black-hole-flyby/video/black-hole-flyby.mp4
+          if-no-files-found: error
       - name: Commit verified runtime captures
         if: github.event_name == 'push'
         run: |
