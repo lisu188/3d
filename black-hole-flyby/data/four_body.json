@@ -1,54 +1,54 @@
 {
   "model": "Newtonian mutual gravity, four point masses, no post-Newtonian corrections, no material deformation",
-  "ephemeris_source": "Idealized initial circular Sun-Earth-Moon orbits; not dated ephemerides",
-  "epoch_tdb": "not tied to any civil date",
+  "ephemeris_source": "JPL Horizons barycentric ICRF geometric vectors, 2026-10-23 00:00 TDB, Sun=10 Earth=399 Moon=301",
+  "epoch_tdb": "2026-10-23 00:00",
   "initial_conditions": {
     "Sun": {
       "position_m": [
-        0.0,
-        0.0,
-        0.0
+        -166486873.27892768,
+        -703167245.1901053,
+        -289889378.7916613
       ],
       "velocity_m_s": [
-        3.761909101065812e-05,
-        -0.0905583493880092,
-        -0.0
+        10.36275603363211,
+        4.351255168490193,
+        1.642095474853202
       ]
     },
     "Earth": {
       "position_m": [
-        149597870700.0,
-        0.0,
-        0.0
+        129741576368.4879,
+        65989898199.814064,
+        28619226660.35055
       ],
       "velocity_m_s": [
-        0.0,
-        29784.6918,
-        0.0
+        -15020.17121294883,
+        23742.24474775713,
+        10290.53177795589
       ]
     },
     "Moon": {
       "position_m": [
-        149597870700.0,
-        382851229.64212275,
-        34471668.96909067
+        130117863591.46599,
+        65915268998.51835,
+        28600156963.82652
       ],
       "velocity_m_s": [
-        -1018.3,
-        29784.6918,
-        0.0
+        -14883.28787636796,
+        24638.17609332393,
+        10768.81389204745
       ]
     },
     "BlackHole": {
       "position_m": [
-        269276167260.0,
-        56847190866.0,
-        897587224.2
+        206423518421.6228,
+        164768699708.04562,
+        72413422340.15318
       ],
       "velocity_m_s": [
-        -199999.9999623809,
-        -0.0905583493880092,
-        -0.0
+        -174524.87351920793,
+        -89599.70906940631,
+        -38838.59054666516
       ]
     }
   },
@@ -69,14 +69,14 @@
   "rtol": 3e-11,
   "position_atol_m": 0.02,
   "velocity_atol_m_s": 2e-08,
-  "rhs_evaluations": 2765,
-  "relative_energy_drift": 1.390937854873742e-15,
-  "relative_momentum_drift": 3.9003014922791173e-16,
-  "relative_angular_momentum_drift": 3.1297458206969876e-16,
+  "rhs_evaluations": 2768,
+  "relative_energy_drift": 2.2606825997033826e-15,
+  "relative_momentum_drift": 1.1669224107814738e-15,
+  "relative_angular_momentum_drift": 1.3328158676634169e-15,
   "orbit_perturbation_km_at_end_vs_without_bh": {
-    "Sun": 55275124.77313165,
-    "Earth": 225276701.8102516,
-    "Moon": 226858625.27433562
+    "Sun": 55789143.64467935,
+    "Earth": 225598358.92700508,
+    "Moon": 227434255.09794742
   },
   "physical_limits": [
     "no Sun internal deformation",
@@ -84,12 +84,12 @@
     "no full general relativity",
     "the comparison scenario includes only Sun Earth Moon, not all other planets"
   ],
-  "closest_black_hole_to_earth_km": 19551036.10414201,
-  "closest_earth_moon_km": 93010.11827198404,
-  "maximum_earth_moon_km": 1472286.2268535187,
-  "final_earth_sun_au": 1.213070028931479,
-  "final_moon_orbital_energy_j_kg": 3123691.213210458,
+  "closest_black_hole_to_earth_km": 19383179.363353472,
+  "closest_earth_moon_km": 374605.5170597227,
+  "maximum_earth_moon_km": 3585660.754339626,
+  "final_earth_sun_au": 1.2094162327840559,
+  "final_moon_orbital_energy_j_kg": 8075235.651830575,
   "lunar_bound_at_end_two_body_diagnostic": false,
-  "max_black_hole_earth_tidal_g": 0.00023073835855992063,
-  "max_position_difference_m_vs_tighter_tolerance": 0.3663611391763141
+  "max_black_hole_earth_tidal_g": 0.00023678494619519669,
+  "max_position_difference_m_vs_tighter_tolerance": 0.3918395217217806
 }
