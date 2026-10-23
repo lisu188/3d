@@ -29,7 +29,7 @@ jobs:
       - name: Capture actual Godot screenshots
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y xvfb libgl1-mesa-dri
+          sudo apt-get install -y xvfb libgl1-mesa-dri ffmpeg
           timeout 90s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --path black-hole-flyby -- --capture-dir="${GITHUB_WORKSPACE}/black-hole-flyby/screenshots"
       - name: Render full orbital flyby film in Godot
         if: github.actor != 'github-actions[bot]'
