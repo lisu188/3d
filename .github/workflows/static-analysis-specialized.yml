@@ -1,0 +1,43 @@
+name: GLSL static analysis
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  glsl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install GLSL compiler and validator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends glslang-tools
+      - name: Validate vertex and fragment shader syntax
+        continue-on-error: true
+        shell: bash
+        run: |
+          : > glsl-report.txt
+          mapfile -d '' shaders < <(git ls-files -z -- '*.glsl')
+          for shader in "${shaders[@]}"; do
+            case "$shader" in
+              *_vs.glsl) stage=vert;;
+              *_fs.glsl) stage=frag;;
+              *) echo "Unknown shader stage: $shader" | tee -a glsl-report.txt; continue;;
+            esac
+            glslangValidator -S "$stage" "$shader" 2>&1 | tee -a glsl-report.txt
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: glsl-validation
+          path: glsl-report.txt
+          if-no-files-found: ignore
