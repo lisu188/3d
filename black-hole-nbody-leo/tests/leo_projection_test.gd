@@ -1,0 +1,31 @@
+extends SceneTree
+
+const Orbits = preload("res://scripts/orbital_data.gd")
+const Projection = preload("res://scripts/leo_projection.gd")
+
+func _initialize() -> void:
+	var orbits = Orbits.new()
+	assert(orbits.load_data(), orbits.last_error)
+	var start: PackedFloat64Array = orbits.rows[0]
+	var frame: Dictionary = Projection.orientation(start)
+	var screen: Vector2 = Vector2(1280, 720)
+	var black_hole: Dictionary = Projection.project(start, frame, 3, screen)
+	var sun: Dictionary = Projection.project(start, frame, 0, screen)
+	var moon: Dictionary = Projection.project(start, frame, 2, screen)
+	assert(black_hole["on_screen"])
+	assert(black_hole["position"].distance_to(screen * 0.5) < 10.0)
+	assert(sun["off_axis_deg"] > 130.0)
+	assert(not sun["on_screen"])
+	assert(moon["off_axis_deg"] > 55.0)
+	assert(moon["off_axis_deg"] < 80.0)
+	assert(is_equal_approx(frame["radial"].length(), 1.0))
+	assert(is_equal_approx(frame["right"].dot(frame["forward"]), 0.0))
+	var half: PackedFloat64Array = orbits.sample_at_day(7.5)
+	var second_frame: Dictionary = Projection.orientation(half)
+	var later_sun: Dictionary = Projection.project(half, second_frame, 0, screen)
+	assert(later_sun["off_axis_deg"] < 30.0)
+	assert(later_sun["on_screen"] or later_sun["occluded"])
+	assert(Projection.angular_radius_deg(half, second_frame, 3) < 0.001)
+	assert(orbits.earth_tide_g(half) < 0.001)
+	print("LEO CAMERA, OCCULTATION, SOLAR DIRECTION, PHYSICAL ANGLES PASS")
+	quit(0)

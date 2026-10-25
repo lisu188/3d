@@ -1,0 +1,6 @@
+.godot/
+.import/
+video/
+*.avi
+*.tmp
+.DS_Store

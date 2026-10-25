@@ -1,0 +1,68 @@
+name: Physical N-body LEO cinema
+
+on:
+  push:
+    branches:
+      - feat/black-hole-physical-leo
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-and-render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download Godot 4.4.1
+        run: |
+          curl --fail --location --retry 3 --output godot.zip https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Import assets and parse GDScript
+        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-nbody-leo --editor --quit
+      - name: Validate four-body data
+        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-nbody-leo --script res://tests/orbit_data_test.gd
+      - name: Validate physical LEO camera geometry
+        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-nbody-leo --script res://tests/leo_projection_test.gd
+      - name: Install headless graphics and movie codec
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgl1-mesa-dri ffmpeg
+      - name: Capture verified 3D Godot frames
+        run: |
+          mkdir -p black-hole-nbody-leo/screenshots
+          timeout 180s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --path black-hole-nbody-leo -- --capture-dir="${GITHUB_WORKSPACE}/black-hole-nbody-leo/screenshots"
+      - name: Render entire 80-second physical four-body LEO movie
+        run: |
+          mkdir -p black-hole-nbody-leo/video
+          timeout 1800s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --disable-vsync --path black-hole-nbody-leo --write-movie video/leo-physical.avi --fixed-fps 15 --quit-after 1200
+          ffmpeg -hide_banner -loglevel error -y -i black-hole-nbody-leo/video/leo-physical.avi -c:v libx264 -preset medium -crf 19 -pix_fmt yuv420p -movflags +faststart black-hole-nbody-leo/video/black-hole-physical-leo-80s.mp4
+          ffprobe -v error -show_entries stream=width,height,nb_frames:format=duration,size -of default=noprint_wrappers=1 black-hole-nbody-leo/video/black-hole-physical-leo-80s.mp4
+      - name: Upload MP4
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-hole-physical-leo-mp4
+          path: black-hole-nbody-leo/video/black-hole-physical-leo-80s.mp4
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload screenshot frames
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-hole-physical-leo-screenshots
+          path: black-hole-nbody-leo/screenshots/*.png
+          retention-days: 30
+          if-no-files-found: error
+      - name: Commit real screenshot frames
+        if: github.event_name == 'push'
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add black-hole-nbody-leo/screenshots/*.png
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: record real physically grounded LEO screenshots"
+            git push
+          fi
