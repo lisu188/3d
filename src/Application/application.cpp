@@ -18,6 +18,9 @@
 #include <iostream>
 #include <sstream>
 #include <tuple>
+#include <cstdlib>
+#include <memory>
+#include "Application/image_buffer_size.h"
 
 #include "glad/gl.h"
 #include "utils.h"
@@ -250,13 +253,24 @@ void xe::Application::save_frame_buffer()
         std::cerr << "Saving Frame buffer error: Front buffer does not exist."<<std::endl;
 
     auto[w,h] = frame_buffer_size();
-    auto data = (GLubyte *)malloc(w * h * 3);
-    OGL_CALL(glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, data));
+    std::size_t bytes;
+    int stride;
+    if (!detail::png_rgb_storage_size(w, h, bytes, stride)) {
+        std::cerr << "Saving frame buffer error: invalid or oversized image.\n";
+        return;
+    }
+    std::unique_ptr<GLubyte, decltype(&std::free)> data(
+        static_cast<GLubyte *>(std::malloc(bytes)), &std::free);
+    if (!data) {
+        std::cerr << "Saving frame buffer error: allocation failed.\n";
+        return;
+    }
+    OGL_CALL(glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, data.get()));
     
     stbi_flip_vertically_on_write(1);
     std::stringstream ss;
     ss << "screenshot_" << std::setw(3) << std::setfill('0') << screenshot_n_ << ".png";
-    stbi_write_png(ss.str().c_str(), w, h, 3, data, w * 3);
+    stbi_write_png(ss.str().c_str(), w, h, 3, data.get(), stride);
     ++screenshot_n_;
     std::cerr<<ss.str()<<"\n"; 
 }
