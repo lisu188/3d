@@ -1,0 +1,72 @@
+name: Render LEO four-body MP4
+
+on:
+  push:
+    branches: [feat/black-hole-leo-3d]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install numerical dependencies
+        run: |
+          python3 -m pip install --user --break-system-packages numpy scipy
+          python3 black-hole-flyby/scripts/generate_orbits.py --output black-hole-flyby/data/four_body.csv --reference-validation
+      - name: Download Godot 4.4.1
+        run: |
+          curl --fail --location --retry 3 --output godot.zip https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q godot.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Validate Godot import and trajectory data
+        run: |
+          ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-flyby --editor --quit
+          ./Godot_v4.4.1-stable_linux.x86_64 --headless --path black-hole-flyby --script res://tests/orbit_data_test.gd
+      - name: Install video and virtual display dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb libgl1-mesa-dri ffmpeg
+      - name: Render actual 3D Godot scene
+        run: |
+          mkdir -p black-hole-flyby/video black-hole-flyby/screenshots/leo
+          timeout 1300s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --disable-vsync --audio-driver Dummy --path black-hole-flyby --write-movie video/leo-four-body.avi --fixed-fps 15 --quit-after 1200
+          ffmpeg -hide_banner -loglevel error -y -i black-hole-flyby/video/leo-four-body.avi -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p -movflags +faststart black-hole-flyby/video/black-hole-leo-3d.mp4
+          for second in 2 18 39 58 74; do
+            ffmpeg -hide_banner -loglevel error -y -ss "$second" -i black-hole-flyby/video/black-hole-leo-3d.mp4 -frames:v 1 "black-hole-flyby/screenshots/leo/frame_${second}.png"
+          done
+          python3 - <<'PY_CHECK'
+          import json, subprocess
+          path='black-hole-flyby/video/black-hole-leo-3d.mp4'
+          result=subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration,size','-of','json',path],text=True)
+          info=json.loads(result)['format']
+          assert abs(float(info['duration'])-80)<0.1, info
+          assert int(info['size'])>50000, info
+          print('VALIDATED MP4',info)
+          PY_CHECK
+      - name: Upload full 3D movie
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-hole-leo-3d-mp4
+          path: black-hole-flyby/video/black-hole-leo-3d.mp4
+          if-no-files-found: error
+      - name: Upload real rendered frames
+        uses: actions/upload-artifact@v4
+        with:
+          name: black-hole-leo-3d-frames
+          path: black-hole-flyby/screenshots/leo/*.png
+          if-no-files-found: error
+      - name: Store numerical data in GitHub
+        if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add black-hole-flyby/data/four_body.csv black-hole-flyby/data/four_body.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: add deterministic validated four-body trajectory"
+            git push
+          fi
