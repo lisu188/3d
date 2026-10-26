@@ -14,6 +14,7 @@ const BODY_COLORS := [Color(1.0, 0.78, 0.39), Color(0.12, 0.34, 0.8), Color(0.68
 @export var visual_exaggeration := 1.0
 @export var earth_exposure := 1.0
 @export var playback_speed := 1.0
+@export var stabilized_leo_camera := true
 
 var data := OrbitData.new()
 var camera: Camera3D
@@ -187,44 +188,60 @@ func _relative_direction(row: PackedFloat64Array, index: int) -> Vector3:
 	return vector.normalized()
 
 func _apply_time() -> void:
-	var day := data.duration_days * (elapsed / duration_seconds)
-	var row := data.sample_at_day(day)
+	var day: float = data.duration_days * (elapsed / duration_seconds)
+	var row: PackedFloat64Array = data.sample_at_day(day)
 	if row.size() != 25:
 		return
-	var orbit_offset := _orbit_vector(day * 86400.0)
-	var camera_position := orbit_offset * (6.3710084 + 0.4)
+	var black_hole_dir: Vector3 = _relative_direction(row, 3)
+	var orbit_offset: Vector3 = _orbit_vector(day * 86400.0)
+	if stabilized_leo_camera:
+		var reference_up: Vector3 = Vector3.UP
+		orbit_offset = reference_up - black_hole_dir * reference_up.dot(black_hole_dir)
+		if orbit_offset.length() < 0.1:
+			reference_up = Vector3.FORWARD
+			orbit_offset = reference_up - black_hole_dir * reference_up.dot(black_hole_dir)
+		orbit_offset = orbit_offset.normalized()
+	var camera_position: Vector3 = orbit_offset * (6.3710084 + 0.4)
 	camera.position = camera_position
-	var outward := orbit_offset.normalized()
-	var bore := (Vector3.UP - outward * outward.dot(Vector3.UP)).normalized()
-	if bore.length() < 0.1:
-		bore = Vector3.RIGHT
-	var tangent := bore.cross(outward).normalized()
-	var look_direction := (outward * 0.24 + tangent * 0.97).normalized()
+	var outward: Vector3 = orbit_offset.normalized()
+	var look_direction: Vector3
+	if stabilized_leo_camera:
+		look_direction = (black_hole_dir - outward * 0.10).normalized()
+	else:
+		var bore: Vector3 = (Vector3.UP - outward * outward.dot(Vector3.UP)).normalized()
+		if bore.length() < 0.1:
+			bore = Vector3.RIGHT
+		var tangent: Vector3 = bore.cross(outward).normalized()
+		look_direction = (outward * 0.24 + tangent * 0.97).normalized()
 	camera.look_at(camera_position + look_direction, outward)
-	var sun_vector := _relative_direction(row, 0)
-	var km_per_au := OrbitData.AU_M * 0.001
+	var km_per_au: float = OrbitData.AU_M * 0.001
+	var observer: Vector3 = _position(row, 1) + camera_position * (1000.0 / km_per_au)
+	var sun_vector: Vector3 = _relative_direction(row, 0)
 	var names := [0, 2, 3]
 	for k in range(3):
 		var index: int = names[k]
-		var direction := _relative_direction(row, index)
-		var distance_km := data.separation_au(row, 1, index) * km_per_au
-		var angular_radius := atan(RADIUS_KM[index] / max(distance_km, 1.0))
-		var node := render_nodes[k]
+		var relative: Vector3 = _position(row, index) - observer
+		var direction: Vector3 = relative.normalized()
+		var distance_km: float = relative.length() * km_per_au
+		var angular_radius: float = atan(RADIUS_KM[index] / max(distance_km, 1.0))
+		var node: MeshInstance3D = render_nodes[k]
 		node.global_position = camera.global_position + direction * 500.0
-		var displayed_radius := 500.0 * tan(angular_radius) * visual_exaggeration
+		var displayed_radius: float = 500.0 * tan(angular_radius) * visual_exaggeration
 		if index == 3:
-			displayed_radius = max(displayed_radius, 0.13)
+			displayed_radius = max(displayed_radius, clampf(1.5 * pow(139000000.0 / max(distance_km, 1.0), 0.8), 1.5, 30.0))
 		elif index == 2:
-			displayed_radius = max(displayed_radius, 0.12)
+			displayed_radius = max(displayed_radius, 2.0)
+		elif index == 0:
+			displayed_radius = max(displayed_radius, 2.0)
 		node.scale = Vector3.ONE * displayed_radius
 		if index == 3:
 			node.look_at(camera.global_position, Vector3.UP)
-	var sun_light := get_node("Sunlight") as DirectionalLight3D
+	var sun_light: DirectionalLight3D = get_node("Sunlight") as DirectionalLight3D
 	sun_light.look_at(sun_light.global_position - sun_vector, Vector3.UP)
-	var earth_material := earth.material_override as ShaderMaterial
+	var earth_material: ShaderMaterial = earth.material_override as ShaderMaterial
 	earth_material.set_shader_parameter("sun_direction", sun_vector)
 	earth_material.set_shader_parameter("rotation_angle", day * TAU)
-	view_label.text = "LEO 400 km | day %.3f / %.1f\nBlack hole: %.0f km from Earth\nMoon: %.0f km | Sun: %.0f km\nTidal differential: %.4g g" % [day, data.duration_days, data.separation_km(row, 1, 3), data.separation_km(row, 1, 2), data.separation_km(row, 1, 0), data.earth_tide_g(row)]
+	view_label.text = "LEO 400 km | virtual tracking camera\nDay %.3f / %.1f | Black hole: %.0f km\nMoon: %.0f km | Sun: %.0f km\nTidal differential: %.4g g" % [day, data.duration_days, data.separation_km(row, 1, 3), data.separation_km(row, 1, 2), data.separation_km(row, 1, 0), data.earth_tide_g(row)]
 	if timeline != null:
 		timeline.set_value_no_signal(elapsed)
 
