@@ -33,6 +33,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y xvfb libgl1-mesa-dri ffmpeg
       - name: Capture verified 3D Godot frames
+        shell: bash
         run: |
           mkdir -p black-hole-nbody-leo/screenshots
           timeout 180s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --audio-driver Dummy --path black-hole-nbody-leo -- --capture-dir="${GITHUB_WORKSPACE}/black-hole-nbody-leo/screenshots" 2>&1 | tee leo-captures.log
@@ -40,6 +41,7 @@ jobs:
             exit 1
           fi
       - name: Render entire 80-second physical four-body LEO movie
+        shell: bash
         run: |
           mkdir -p black-hole-nbody-leo/video
           timeout 1800s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --audio-driver Dummy --disable-vsync --path black-hole-nbody-leo --write-movie video/leo-physical.avi --fixed-fps 15 --quit-after 1200 2>&1 | tee leo-movie.log
