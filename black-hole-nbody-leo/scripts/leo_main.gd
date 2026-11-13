@@ -1,14 +1,14 @@
 extends Node2D
 
 const Orbits = preload("res://scripts/orbital_data.gd")
-const Projection = preload("res://scripts/leo_projection.gd")
+const LeoProjection = preload("res://scripts/leo_projection.gd")
 const STAR_SHADER = preload("res://shaders/stars.gdshader")
 const EARTH_SHADER = preload("res://shaders/earth.gdshader")
 const ATMOSPHERE_SHADER = preload("res://shaders/atmosphere.gdshader")
 const MOON_SHADER = preload("res://shaders/moon.gdshader")
 const DURATION_SECONDS: float = 80.0
-const EARTH_SCENE_RADIUS: float = Projection.EARTH_RADIUS_KM / 1000.0
-const EARTH_CAMERA_DISTANCE: float = (Projection.EARTH_RADIUS_KM + Projection.CAMERA_ALTITUDE_KM) / 1000.0
+const EARTH_SCENE_RADIUS: float = LeoProjection.EARTH_RADIUS_KM / 1000.0
+const EARTH_CAMERA_DISTANCE: float = (LeoProjection.EARTH_RADIUS_KM + LeoProjection.CAMERA_ALTITUDE_KM) / 1000.0
 const RENDER_MAGNIFICATION: float = 8.0
 const BLACK_HOLE_SHADOW_MAGNIFICATION: float = 18000.0
 const BLACK_HOLE_LENS_MAGNIFICATION: float = 5.0
@@ -78,7 +78,7 @@ func _setup_space_scene(dimensions: Vector2) -> void:
 	camera.name = "Observer420km"
 	camera.near = 0.015
 	camera.far = 80.0
-	camera.fov = Projection.CAMERA_FOV_DEG
+	camera.fov = LeoProjection.CAMERA_FOV_DEG
 	camera.current = true
 	world.add_child(camera)
 	planet = MeshInstance3D.new()
@@ -108,8 +108,8 @@ func _setup_space_scene(dimensions: Vector2) -> void:
 	atmosphere_material.shader = ATMOSPHERE_SHADER
 	atmosphere.material_override = atmosphere_material
 	world.add_child(atmosphere)
-	var radial_y: float = cos(Projection.CAMERA_TILT_RAD)
-	var forward_z: float = sin(Projection.CAMERA_TILT_RAD)
+	var radial_y: float = cos(LeoProjection.CAMERA_TILT_RAD)
+	var forward_z: float = sin(LeoProjection.CAMERA_TILT_RAD)
 	planet.position = Vector3(0.0, -EARTH_CAMERA_DISTANCE * radial_y, -EARTH_CAMERA_DISTANCE * forward_z)
 	atmosphere.position = planet.position
 	planet_image = TextureRect.new()
@@ -154,22 +154,22 @@ func _refresh() -> void:
 	var dimensions: Vector2 = get_viewport_rect().size
 	var day: float = playhead * orbits.duration_days / DURATION_SECONDS
 	state = orbits.sample_at_day(day)
-	current_frame = Projection.orientation(state)
+	current_frame = LeoProjection.orientation(state)
 	projections.clear()
 	for index in [0, 2, 3]:
-		projections[index] = Projection.project(state, current_frame, index, dimensions)
+		projections[index] = LeoProjection.project(state, current_frame, index, dimensions)
 	var bh: Dictionary = projections[3]
-	var screen_focal: float = 0.5 / tan(deg_to_rad(Projection.CAMERA_FOV_DEG) * 0.5)
+	var screen_focal: float = 0.5 / tan(deg_to_rad(LeoProjection.CAMERA_FOV_DEG) * 0.5)
 	var bh_distance_km: float = bh["distance_km"]
 	var shadow_radius_rad: float = deg_to_rad(bh["angular_radius_deg"])
-	var r_einstein: float = sqrt(4.0 * Projection.SOLAR_GM * 10.0 / (Projection.LIGHT_SPEED_M_S * Projection.LIGHT_SPEED_M_S * bh_distance_km * 1000.0))
+	var r_einstein: float = sqrt(4.0 * LeoProjection.SOLAR_GM * 10.0 / (LeoProjection.LIGHT_SPEED_M_S * LeoProjection.LIGHT_SPEED_M_S * bh_distance_km * 1000.0))
 	var hole_uv: Vector2 = bh["uv"] if bh["front"] and not bh["occluded"] else Vector2(-8.0, -8.0)
 	sky_material.set_shader_parameter("black_hole_uv", hole_uv)
 	sky_material.set_shader_parameter("aspect", dimensions.x / dimensions.y)
 	sky_material.set_shader_parameter("black_hole_shadow_radius", minf(0.16, tan(shadow_radius_rad) * screen_focal * BLACK_HOLE_SHADOW_MAGNIFICATION))
 	sky_material.set_shader_parameter("black_hole_lens_radius", minf(0.19, r_einstein * screen_focal * BLACK_HOLE_LENS_MAGNIFICATION))
 	sky_material.set_shader_parameter("sky_rotation", atan2(current_frame["forward"].y, current_frame["forward"].x))
-	var sun_local: Vector3 = Projection.sun_direction_local(state, current_frame)
+	var sun_local: Vector3 = LeoProjection.sun_direction_local(state, current_frame)
 	earth_material.set_shader_parameter("sun_direction", sun_local)
 	earth_material.set_shader_parameter("elapsed_days", day)
 	atmosphere_material.set_shader_parameter("sun_direction", sun_local)
@@ -180,7 +180,7 @@ func _refresh() -> void:
 		moon.position = moon_view["position"]
 		var diameter: float = minf(96.0, 2.0 * dimensions.y * screen_focal * tan(deg_to_rad(moon_view["angular_radius_deg"])) * RENDER_MAGNIFICATION)
 		moon.scale = Vector2.ONE * maxf(diameter, 4.0) / 512.0
-		var moon_to_sun: Vector3 = (Projection.body_relative_earth(state, 0) - Projection.body_relative_earth(state, 2)).normalized()
+		var moon_to_sun: Vector3 = (LeoProjection.body_relative_earth(state, 0) - LeoProjection.body_relative_earth(state, 2)).normalized()
 		var local_lighting: Vector3 = Vector3(moon_to_sun.dot(current_frame["right"]), -moon_to_sun.dot(current_frame["up"]), -moon_to_sun.dot(current_frame["forward"]))
 		moon_material.set_shader_parameter("sunlight", local_lighting)
 
@@ -198,7 +198,7 @@ func _draw_sun() -> void:
 	if not sun["on_screen"]:
 		return
 	var center: Vector2 = sun["position"]
-	var focal: float = 0.5 / tan(deg_to_rad(Projection.CAMERA_FOV_DEG) * 0.5)
+	var focal: float = 0.5 / tan(deg_to_rad(LeoProjection.CAMERA_FOV_DEG) * 0.5)
 	var visual_radius: float = maxf(4.0, minf(44.0, get_viewport_rect().size.y * focal * tan(deg_to_rad(sun["angular_radius_deg"])) * RENDER_MAGNIFICATION))
 	for layer in range(10, 0, -1):
 		var spread: float = visual_radius * (1.0 + float(layer) * 0.60)
@@ -227,7 +227,7 @@ func _draw_header(dimensions: Vector2) -> void:
 	_text("ODLEGŁOŚĆ KSIĘŻYCA", Vector2(54, 250), 14, Color(0.62, 0.77, 0.90))
 	_text("%.0f tys. km" % (projections[2]["distance_km"] / 1000.0), Vector2(53, 279), 24)
 	_text("ODLEGŁOŚĆ SŁOŃCA", Vector2(54, 305), 14, Color(0.62, 0.77, 0.90))
-	_text("%.4f AU" % (projections[0]["distance_km"] / Projection.AU_KM), Vector2(53, 334), 24)
+	_text("%.4f AU" % (projections[0]["distance_km"] / LeoProjection.AU_KM), Vector2(53, 334), 24)
 	_text("PRZYSPIESZENIE PŁYWOWE Δg", Vector2(54, 360), 14, Color(0.62, 0.77, 0.90))
 	_text("%.3e × g" % orbits.earth_tide_g(state), Vector2(53, 390), 22, Color(1.0, 0.77, 0.57))
 	_text("CZAS: %.3f / 15.000 DNI", Vector2(53, 419), 14, Color(0.67, 0.83, 0.99))
