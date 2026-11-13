@@ -1,0 +1,95 @@
+{
+  "model": "Newtonian mutual gravity, four point masses, no post-Newtonian corrections, no material deformation",
+  "ephemeris_source": "Idealized initial circular Sun-Earth-Moon orbits; not dated ephemerides",
+  "epoch_tdb": "not tied to any civil date",
+  "initial_conditions": {
+    "Sun": {
+      "position_m": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "velocity_m_s": [
+        3.761909101065812e-05,
+        -0.0905583493880092,
+        -0.0
+      ]
+    },
+    "Earth": {
+      "position_m": [
+        149597870700.0,
+        0.0,
+        0.0
+      ],
+      "velocity_m_s": [
+        0.0,
+        29784.6918,
+        0.0
+      ]
+    },
+    "Moon": {
+      "position_m": [
+        149597870700.0,
+        382851229.64212275,
+        34471668.96909067
+      ],
+      "velocity_m_s": [
+        -1018.3,
+        29784.6918,
+        0.0
+      ]
+    },
+    "BlackHole": {
+      "position_m": [
+        269276167260.0,
+        56847190866.0,
+        897587224.2
+      ],
+      "velocity_m_s": [
+        -199999.9999623809,
+        -0.0905583493880092,
+        -0.0
+      ]
+    }
+  },
+  "gravitational_parameters_m3_s2": {
+    "Sun": 1.3271244004127942e+20,
+    "Earth": 398600435507000.0,
+    "Moon": 4902800118000.0,
+    "BlackHole": 1.3271244004127943e+21
+  },
+  "sun_mass_equivalent_black_hole": 10.0,
+  "incoming_heliocentric_radial_velocity_m_s": -200000.0,
+  "initial_radial_offset_au": 0.8,
+  "initial_tangential_offset_au": 0.38,
+  "initial_out_of_plane_offset_au": 0.006,
+  "duration_days": 15.0,
+  "samples": 1200,
+  "integrator": "scipy.integrate.solve_ivp(DOP853) - adaptive order-8, max step 7200 s",
+  "rtol": 3e-11,
+  "position_atol_m": 0.02,
+  "velocity_atol_m_s": 2e-08,
+  "rhs_evaluations": 2765,
+  "relative_energy_drift": 1.390937854873742e-15,
+  "relative_momentum_drift": 3.9003014922791173e-16,
+  "relative_angular_momentum_drift": 3.1297458206969876e-16,
+  "orbit_perturbation_km_at_end_vs_without_bh": {
+    "Sun": 55275124.77313165,
+    "Earth": 225276701.8102516,
+    "Moon": 226858625.27433562
+  },
+  "physical_limits": [
+    "no Sun internal deformation",
+    "no tides/solid-body hydrodynamics",
+    "no full general relativity",
+    "the comparison scenario includes only Sun Earth Moon, not all other planets"
+  ],
+  "closest_black_hole_to_earth_km": 19551036.10414201,
+  "closest_earth_moon_km": 93010.11827198404,
+  "maximum_earth_moon_km": 1472286.2268535187,
+  "final_earth_sun_au": 1.213070028931479,
+  "final_moon_orbital_energy_j_kg": 3123691.213210458,
+  "lunar_bound_at_end_two_body_diagnostic": false,
+  "max_black_hole_earth_tidal_g": 0.00023073835855992063,
+  "max_position_difference_m_vs_tighter_tolerance": 0.3663611391763141
+}
