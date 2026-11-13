@@ -229,8 +229,8 @@ func _draw_header(dimensions: Vector2) -> void:
 	_text("ODLEGŁOŚĆ SŁOŃCA", Vector2(54, 305), 14, Color(0.62, 0.77, 0.90))
 	_text("%.4f AU" % (projections[0]["distance_km"] / LeoProjection.AU_KM), Vector2(53, 334), 24)
 	_text("PRZYSPIESZENIE PŁYWOWE Δg", Vector2(54, 360), 14, Color(0.62, 0.77, 0.90))
-	_text("%.3e × g" % orbits.earth_tide_g(state), Vector2(53, 390), 22, Color(1.0, 0.77, 0.57))
-	_text("CZAS: %.3f / 15.000 DNI", Vector2(53, 419), 14, Color(0.67, 0.83, 0.99))
+	_text("%s × g" % String.num_scientific(orbits.earth_tide_g(state)), Vector2(53, 390), 22, Color(1.0, 0.77, 0.57))
+	_text("CZAS: %.3f / 15.000 DNI" % state[0], Vector2(53, 419), 14, Color(0.67, 0.83, 0.99))
 	var right_x: float = dimensions.x - 276.0
 	draw_rect(Rect2(right_x, 26, 250, 99), Color(0.006, 0.012, 0.028, 0.87))
 	_text("GODOT 4 · N-BODY", Vector2(right_x + 14, 55), 18)

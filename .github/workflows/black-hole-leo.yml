@@ -35,11 +35,17 @@ jobs:
       - name: Capture verified 3D Godot frames
         run: |
           mkdir -p black-hole-nbody-leo/screenshots
-          timeout 180s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --path black-hole-nbody-leo -- --capture-dir="${GITHUB_WORKSPACE}/black-hole-nbody-leo/screenshots"
+          timeout 180s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --path black-hole-nbody-leo -- --capture-dir="${GITHUB_WORKSPACE}/black-hole-nbody-leo/screenshots" 2>&1 | tee leo-captures.log
+          if grep -E '^(ERROR|SCRIPT ERROR|SHADER ERROR):' leo-captures.log; then
+            exit 1
+          fi
       - name: Render entire 80-second physical four-body LEO movie
         run: |
           mkdir -p black-hole-nbody-leo/video
-          timeout 1800s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --disable-vsync --path black-hole-nbody-leo --write-movie video/leo-physical.avi --fixed-fps 15 --quit-after 1200
+          timeout 1800s xvfb-run -a ./Godot_v4.4.1-stable_linux.x86_64 --rendering-driver opengl3 --disable-vsync --path black-hole-nbody-leo --write-movie video/leo-physical.avi --fixed-fps 15 --quit-after 1200 2>&1 | tee leo-movie.log
+          if grep -E '^(ERROR|SCRIPT ERROR|SHADER ERROR):' leo-movie.log; then
+            exit 1
+          fi
           ffmpeg -hide_banner -loglevel error -y -i black-hole-nbody-leo/video/leo-physical.avi -c:v libx264 -preset medium -crf 19 -pix_fmt yuv420p -movflags +faststart black-hole-nbody-leo/video/black-hole-physical-leo-80s.mp4
           ffprobe -v error -show_entries stream=width,height,nb_frames:format=duration,size -of default=noprint_wrappers=1 black-hole-nbody-leo/video/black-hole-physical-leo-80s.mp4
       - name: Upload MP4
